@@ -30,19 +30,11 @@ def downloadMusic(groupName):
         csvReader = csv.reader(csvDataFile)
         for row in csvReader:
             allGroup[row[6]] = row[20]
+            print(row[6].row[20])
     groupId = 0
-    with open('SongsData.csv', encoding='UTF-8') as csvDataFile:
-        csvReader = csv.reader(csvDataFile)
-        for row in csvReader:
-            if row[4] == 'main' and allGroup[row[6]] == groupName:
-                groupId = row[6]
-                ydl_opts = {'outtmpl': "KPOP/"+groupName + '/' + row[2] + "^^^^" + row[0] + ".%(ext)s",'forceip':'4'}
-                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
 
-                    row[5] = row[5]
-                    ydl.download(['https://www.youtube.com/watch?v=' + row[5]])
     return groupId
-
+downloadMusic(("Blackpink"))
 
 def _multipart_post(self, data):
     encoder = MultipartEncoder(fields=data)
@@ -136,7 +128,7 @@ def main():
                     time.sleep(1000)
                     print("continue")
 #main()
-startProcess("Blackpink")
+#startProcess("Blackpink")
 
 
 # upload(groupName,"rwp6j5","165")
