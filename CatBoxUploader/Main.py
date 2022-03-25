@@ -3,13 +3,14 @@ import csv
 import os
 import time
 
-import youtube_dl
+import yt_dlp
+import os
 import sys
 import requests
 import mimetypes
 from os import path
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
-
+from moviepy.editor import VideoFileClip
 from catbox import CatboxUploader
 
 import csv
@@ -26,21 +27,40 @@ def downloadMusic(groupName):
         print("Creation of the directory %s failed" % path)
     else:
         print("Successfully created the directory %s " % path)
-    with open('SongsData.csv', encoding='utf-8') as csvDataFile:
+    with open('SongsDat2.csv', encoding='utf-8') as csvDataFile:
         csvReader = csv.reader(csvDataFile)
         for row in csvReader:
-            allGroup[row[6]] = row[20]
+            allGroup[row[9]] = row[22]
     groupId = 0
-    with open('SongsData.csv', encoding='UTF-8') as csvDataFile:
+    with open('SongsDat2.csv', encoding='UTF-8') as csvDataFile:
         csvReader = csv.reader(csvDataFile)
         for row in csvReader:
-            if row[4] == 'main' and allGroup[row[6]] == groupName:
-                groupId = row[6]
-                ydl_opts = {'outtmpl': "KPOP/"+groupName + '/' + row[2] + "^^^^" + row[0] + ".%(ext)s",'forceip':'4'}
-                with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            if row[6] == 'main' and allGroup[row[9]] == groupName:
+                groupId = row[9]
 
-                    row[5] = row[5]
-                    ydl.download(['https://www.youtube.com/watch?v=' + row[5]])
+                if int(row[13]) > 500000 and row[8] != "#NAME" and row[8] != "":
+                    if "r" in row[7] or "d" in row[7] or "j" in row[7] or "a" in row[7] or "z" in row[7] or "d" in row[7] or "e" in row[7]  or "c" in row[7]:
+                        print(row[7])
+                    else:
+                        ydl_opts = {'format': 'bestvideo[height<=?1080]+bestaudio/best[filesize<75M]','outtmpl': "KPOP/"+groupName + '/' + row[2] + "^^^^" + row[0] + ".%(ext)s",'forceip':'4'}
+                        print(int(row[13]),row[13],"Views")
+                        if int(row[13]) < 25000000 and int(row[13]) > 5000000:
+                            ydl_opts = {'format': 'bestvideo[height<=?720]+bestaudio/best',
+                                        'outtmpl': "KPOP/" + groupName + '/' + row[2] + "^^^^" + row[0] + ".%(ext)s",
+                                        'forceip': '4'}
+                            print("Lowered Quality")
+                        elif(int(row[13]) < 5000000):
+                            ydl_opts = {'format': 'bestvideo[height<=?360]+bestaudio/best',
+                                        'outtmpl': "KPOP/" + groupName + '/' + row[2] + "^^^^" + row[0] + ".%(ext)s",
+                                        'forceip': '4'}
+                            print("Lowered Quality2")
+                        try:
+                            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                                ydl.download(['https://www.youtube.com/watch?v=' + row[8]])
+                        except:
+                            print("error")
+                else:
+                    print("Too Low View Count")
     return groupId
 
 
@@ -75,6 +95,8 @@ def upload(groupName, id, groupId):
             result = uploader.add(id)
             print(result)
             if result.find("moe/") != -1:
+                clip = VideoFileClip("KPOP/"+groupName + "/" + filename)
+                print(clip.duration)
                 a_dict = dict()
                 a_dict["url"] = "https://files.catbox.moe/" + result.split("moe/")[1]
                 a_dict["groupName"] = groupName
@@ -82,9 +104,11 @@ def upload(groupName, id, groupId):
                 a_dict["albumUrl"] = "https://catbox.moe/c/" + id
                 a_dict["groupId"] = groupId
                 a_dict["songId"] = (filename.split("^^^^")[1]).split(".mp4")[0]
+                a_dict["SongLength"] = clip.duration
                 writer.writerow(
                     [a_dict["songName"], a_dict["url"], a_dict["groupName"], a_dict["albumUrl"], a_dict["groupId"],
                      a_dict["songId"]])
+                clip.close()
                 result = uploader.moveAlbum(id, result.split("moe/")[1])
                 print(result)
                 os.remove("KPOP/"+groupName + "/" + filename)
@@ -102,14 +126,18 @@ def reformatCode(groupName):
 def startProcess(name):
     groupName = name
     groupId = downloadMusic(groupName)
-    id = createAlbum(groupName)
-    # reformatCode(groupName)
-    if id != "fail":
-        print("Album")
-        upload(groupName, id, groupId)
-        with open("FinishedGroups.csv", 'a', encoding='utf-8') as fd:
-            writer = csv.writer(fd)
-            writer.writerow([name])
+
+
+    path, dirs, files = next(os.walk("KPOP/"+groupName + "/"))
+    if len(files) > 0:
+        id = createAlbum(groupName)
+        # reformatCode(groupName)
+        if id != "fail":
+            print("Album")
+            upload(groupName, id, groupId)
+            with open("FinishedGroups.csv", 'a', encoding='utf-8') as fd:
+                writer = csv.writer(fd)
+                writer.writerow([name])
 def main():
     finishedGroups = []
     with open('FinishedGroups.csv', encoding='utf-8') as csvDataFile:
@@ -118,25 +146,24 @@ def main():
             if len(row) > 0:
                 finishedGroups.append(row[0])
 
-    with open('Artist.csv', encoding='utf-8') as csvDataFile:
+    with open('ArtistCheck.csv', encoding='utf-8') as csvDataFile:
         firstline = 0
         csvReader = csv.reader(csvDataFile)
 
         for row in csvReader:
             if firstline < 2:
-                print("skip")
                 firstline += 1
             elif len(row) > 0:
                 if row[1] in finishedGroups:
-                    print(row[1] + " has finished already")
+                    print(row[2] + " has finished already")
                 else:
-                    print("Starting " + row[1])
-                    startProcess(row[1])
+                    print("Starting " + row[2])
+                    startProcess(row[2])
                     print("sleeping")
-                    time.sleep(1000)
+                    time.sleep(5)
                     print("continue")
-#main()
-startProcess("Blackpink")
+main()
+#startProcess("Blackpink")
 
 
 # upload(groupName,"rwp6j5","165")

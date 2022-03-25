@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from base import Uploader
 
+userhash = ""
 
 class CatboxUploader(Uploader):
     def __init__(self, filename):
@@ -13,7 +14,7 @@ class CatboxUploader(Uploader):
         try:
             data = {
                 'reqtype': 'addtoalbum',
-                'userhash': '', #removed hashed
+                'userhash': userhash, #removed hashed
                 'short': albumNum,
                 'files': alsoFile
             }
@@ -27,7 +28,7 @@ class CatboxUploader(Uploader):
         try:
             data = {
                 'reqtype': 'fileupload',
-                'userhash': '', #removed hashed
+                'userhash': userhash, #removed hashed
                 'fileToUpload': (file.name, file, self._mimetype())
             }
             response = self._multipart_post(data)
@@ -40,7 +41,7 @@ class CatboxUploader(Uploader):
             data = {
                 'reqtype': 'createalbum',
                 'title': titleName,
-                'userhash': '', #removed hashed
+                'userhash': userhash, #removed hashed
                 'desc' : titleName+" Songs",
                 'files':""
             }
