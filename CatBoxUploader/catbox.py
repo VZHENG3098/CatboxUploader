@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from base import Uploader
 
-userhash = ""
+userhash = "f33e8077d5f18ae11dd2f6336"
 
 class CatboxUploader(Uploader):
     def __init__(self, filename):
@@ -32,6 +32,9 @@ class CatboxUploader(Uploader):
                 'fileToUpload': (file.name, file, self._mimetype())
             }
             response = self._multipart_post(data)
+        except:
+            print('sdf')
+            return ""
         finally:
             file.close()
 
