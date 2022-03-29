@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from base import Uploader
 
-userhash = "f33e8077d5f18ae11dd2f6336"
+userhash = "4f5388fe451460a0653d54dee"
 
 class CatboxUploader(Uploader):
     def __init__(self, filename):

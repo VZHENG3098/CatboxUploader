@@ -13,6 +13,7 @@ from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 from moviepy.editor import VideoFileClip
 from catbox import CatboxUploader
 from multiprocessing.dummy import Pool as ThreadPool
+import string
 import multiprocessing
 import math
 
@@ -117,7 +118,8 @@ def upload(groupName, id, groupId):
     a_file = open("CatBoxData.csv", "a")
     listOfList = []
     for filename in os.listdir("KPOP/" + groupName):
-        listOfList.append([filename, groupName, id, groupId])
+        if filename.endswith('webm') or filename.endswith('mkv'):
+            listOfList.append([filename, groupName, id, groupId])
     pool = ThreadPool(200)
     result_list = pool.starmap(multiprocess, listOfList)
     pool.close()
@@ -126,7 +128,7 @@ def upload(groupName, id, groupId):
     with open("CatBoxData.csv", 'a', encoding='utf-8') as fd:
         writer = csv.writer(fd)
         for fileIn in result_list:
-            if (len(fileIn)) == 7:
+            if fileIn != None and (len(fileIn)) == 7:
                 writer.writerow(fileIn)
     a_file.close()
 
@@ -168,8 +170,24 @@ def reformatCode(groupName):
         result = re.sub(r'[^\x00-\x7f]', r'', str)
         os.rename(groupName + "/" + filename, groupName + "/" + result)
 
+def format_filename(s):
+    """Take a string and return a valid filename constructed from the string.
+Uses a whitelist approach: any characters not present in valid_chars are
+removed. Also spaces are replaced with underscores.
+
+Note: this method may produce invalid filenames such as ``, `.` or `..`
+When I use this method I prepend a date string like '2009_01_15_19_46_32_'
+and append a file extension like '.txt', so I avoid the potential of using
+an invalid filename.
+
+"""
+    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+    filename = ''.join(c for c in s if c in valid_chars)
+    filename = filename.replace(' ', '_')  # I don't like spaces in filenames.
+    return filename
+
 def startProcess(name):
-    groupName = name
+    groupName = format_filename(name)
     groupId = downloadMusic(groupName)
 
 
@@ -183,6 +201,10 @@ def startProcess(name):
             with open("FinishedGroups.csv", 'a', encoding='utf-8') as fd:
                 writer = csv.writer(fd)
                 writer.writerow([name])
+    else:
+        with open("FinishedGroups.csv", 'a', encoding='utf-8') as fd:
+            writer = csv.writer(fd)
+            writer.writerow([name])
 def main():
     finishedGroups = []
     with open('FinishedGroups.csv', encoding='utf-8') as csvDataFile:
